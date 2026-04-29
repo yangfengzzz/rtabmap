@@ -1,14 +1,16 @@
-# SuperPoint, SuperGlue, And D455 Workflow
+# SuperPoint, SuperGlue, LightGlue, And D455 Workflow
 
-This is the highest-value task path for future agent work in this repo: build RTAB-Map with SuperPoint and SuperGlue support, then validate that the build can be used with an Intel RealSense D455 through the RealSense2 backend.
+This is the highest-value task path for future agent work in this repo: build RTAB-Map with SuperPoint plus a native learned matcher, then validate that the build can be used with an Intel RealSense D455 through the RealSense2 backend.
 
 ## What Exists In The Repo Already
 
 - SuperPoint Torch support exists behind `WITH_TORCH` in `CMakeLists.txt`.
 - SuperGlue matcher mode `Vis/CorNNType=6` is a native libtorch backend under `corelib/src/superglue_torch/`.
+- LightGlue matcher mode `Vis/CorNNType=8` is a native libtorch backend under `corelib/src/lightglue_torch/`.
 - Upstream SuperGlue checkpoints should be converted once with `scripts/convert_superglue_weights.py`.
+- Upstream LightGlue checkpoints should be converted once with `scripts/convert_lightglue_weights.py`.
 - The RealSense D400 family, including D455, should go through `CameraRealSense2`, not the legacy RealSense driver.
-- `tools/Matcher/main.cpp` already shows a canonical SuperPoint + SuperGlue invocation example.
+- `tools/Matcher/main.cpp` already shows canonical SuperPoint + SuperGlue and SuperPoint + LightGlue invocation examples.
 - `tools/CameraRGBD/main.cpp` exposes RealSense2 as driver `11`.
 
 ## Compile-Time Requirements
@@ -34,10 +36,14 @@ The CMake summary should indicate all of the following:
 
 - `With SuperPoint = YES`
 - `With SuperGlue = YES`
-- `With Python3 = YES`
+- `With LightGlue = YES`
 - `With RealSense2 = YES`
 
-Nice to have, but not strictly required for SuperGlue:
+Only needed for Python-based auxiliary paths:
+
+- `With Python3 = YES`
+
+Nice to have, but not strictly required for native SuperGlue or LightGlue:
 
 - `With Superpoint Rpautrat = YES`
 
@@ -49,7 +55,9 @@ The repo contains wrappers, not all upstream model assets.
 
 - SuperPoint Torch needs a `.pt` model file referenced by `SuperPoint/ModelPath`.
 - SuperGlue needs a converted native weights file referenced by `SuperGlue/WeightsPath`.
+- LightGlue needs a converted native weights file referenced by `LightGlue/WeightsPath`.
 - `scripts/convert_superglue_weights.py` converts upstream OrderedDict checkpoints into a plain-dict archive that libtorch C++ can read directly.
+- `scripts/convert_lightglue_weights.py` does the same for upstream LightGlue checkpoints.
 
 Implication for agents:
 
@@ -62,7 +70,7 @@ Implication for agents:
 
 The fastest feature-stack validation is the matcher tool, because it avoids camera and mapping complexity.
 
-The repo already documents this pattern in `tools/Matcher/main.cpp`:
+The repo already documents these patterns in `tools/Matcher/main.cpp`:
 
 ```bash
 rtabmap-matcher \
@@ -70,6 +78,13 @@ rtabmap-matcher \
   --SuperPoint/ModelPath "superpoint.pt" \
   --Vis/CorNNType 6 \
   --SuperGlue/WeightsPath "superglue_indoor_native.pth" \
+  from.png to.png
+
+rtabmap-matcher \
+  --Vis/FeatureType 11 \
+  --SuperPoint/ModelPath "superpoint.pt" \
+  --Vis/CorNNType 8 \
+  --LightGlue/WeightsPath "superpoint_lightglue_native.pth" \
   from.png to.png
 ```
 
@@ -79,7 +94,11 @@ Interpretation:
   - use SuperPoint Torch
 - `Vis/CorNNType 6`
   - use native SuperGlue matcher mode
+- `Vis/CorNNType 8`
+  - use native LightGlue matcher mode
 - `SuperGlue/WeightsPath`
+  - point at the converted native checkpoint
+- `LightGlue/WeightsPath`
   - point at the converted native checkpoint
 
 In practice, also expect to set or verify:
@@ -87,6 +106,13 @@ In practice, also expect to set or verify:
 - `SuperGlue/Cuda=true|false`
 - `SuperGlue/Threshold`
 - `SuperGlue/Iterations`
+- `LightGlue/Cuda=true|false`
+- `LightGlue/FilterThreshold`
+- `LightGlue/NLayers`
+- `LightGlue/DepthConfidence`
+- `LightGlue/WidthConfidence`
+
+For live D455 use, prefer LightGlue over SuperGlue when you want a learned matcher in the odometry loop. In local validation on the sample `BoxImgs` pair, native LightGlue produced 74 matches / 72 inliers while native SuperGlue produced 0 matches / 0 inliers with the same SuperPoint features.
 
 ## D455 Validation Path
 
@@ -122,7 +148,9 @@ These are the places to inspect when a D455 task mentions stream format, synchro
 - Feature parameters: `corelib/include/rtabmap/core/Parameters.h`
 - SuperPoint implementation: `corelib/src/Features2d.cpp`
 - Native SuperGlue matcher: `corelib/src/superglue_torch/SuperGlue.cpp`
+- Native LightGlue matcher: `corelib/src/lightglue_torch/LightGlue.cpp`
 - Checkpoint converter: `scripts/convert_superglue_weights.py`
+- Checkpoint converter: `scripts/convert_lightglue_weights.py`
 - RealSense2 backend: `corelib/src/camera/CameraRealSense2.cpp`
 - Camera validation tool: `tools/CameraRGBD/main.cpp`
 - Matcher validation tool: `tools/Matcher/main.cpp`
@@ -133,7 +161,7 @@ These are the places to inspect when a D455 task mentions stream format, synchro
 1. Verify `WITH_TORCH` and `WITH_REALSENSE2` in `build/CMakeCache.txt`.
 2. Re-run CMake if any of them are disabled or stale.
 3. Build `rtabmap-matcher` and `rtabmap-cameraRGBD` first.
-4. Validate SuperPoint + SuperGlue offline with images.
+4. Validate SuperPoint + SuperGlue or SuperPoint + LightGlue offline with images.
 5. Validate D455 camera bring-up separately.
 6. Only after both pass, move to the full RTAB-Map app or mapping workflow.
 
@@ -144,9 +172,9 @@ These are the places to inspect when a D455 task mentions stream format, synchro
 - librealsense2 not found
   - D455 support compiles out or reports unavailable at runtime.
 - raw upstream checkpoint used directly
-  - convert it first with `scripts/convert_superglue_weights.py` or the native loader will reject it.
+  - convert it first with `scripts/convert_superglue_weights.py` or `scripts/convert_lightglue_weights.py` or the native loader will reject it.
 - model assets missing
-  - compiled support exists, but runtime fails when loading `.pt` or converted SuperGlue weights.
+  - compiled support exists, but runtime fails when loading `.pt` or converted learned-matcher weights.
 
 ## What To Say In A Handoff
 

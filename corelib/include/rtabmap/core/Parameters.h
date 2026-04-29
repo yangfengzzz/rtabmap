@@ -346,6 +346,12 @@ class RTABMAP_CORE_EXPORT Parameters
     RTABMAP_PARAM(SuperGlue, Iterations,     int, 20,      "Sinkhorn iterations used by native SuperGlue.");
     RTABMAP_PARAM(SuperGlue, Threshold,      float, 0.2,   "Match threshold used by native SuperGlue.");
     RTABMAP_PARAM(SuperGlue, Cuda,           bool, true,   "Use Cuda device for native SuperGlue, otherwise CPU device is used by default.");
+    RTABMAP_PARAM_STR(LightGlue, WeightsPath,       "",           "[Required] Path to native LightGlue weights (*.pth). Upstream LightGlue checkpoints should first be converted with scripts/convert_lightglue_weights.py.");
+    RTABMAP_PARAM(LightGlue, NLayers,               int,   9,      "Number of LightGlue transformer layers.");
+    RTABMAP_PARAM(LightGlue, FilterThreshold,       float, 0.1,    "Match threshold used by native LightGlue.");
+    RTABMAP_PARAM(LightGlue, DepthConfidence,       float, 0.95,   "Adaptive early-stop threshold used by native LightGlue. Disable with values <= 0.");
+    RTABMAP_PARAM(LightGlue, WidthConfidence,       float, 0.99,   "Adaptive pruning threshold used by native LightGlue. Disable with values <= 0.");
+    RTABMAP_PARAM(LightGlue, Cuda,                  bool,  true,   "Use Cuda device for native LightGlue, otherwise CPU device is used by default.");
 
     RTABMAP_PARAM_STR(PyDetector, Path,       "",           "Path to python script file (see available ones in rtabmap/corelib/src/python/*). See the header to see where the script should be copied.");
 	RTABMAP_PARAM(PyDetector, Cuda,           bool, true,   "Use cuda.");
@@ -722,7 +728,7 @@ class RTABMAP_CORE_EXPORT Parameters
     RTABMAP_PARAM(Vis, GridRows,                  int,   1,     uFormat("Number of rows of the grid used to extract uniformly \"%s / grid cells\" features from each cell.", kVisMaxFeatures().c_str()));
     RTABMAP_PARAM(Vis, GridCols,                  int,   1,     uFormat("Number of columns of the grid used to extract uniformly \"%s / grid cells\" features from each cell.", kVisMaxFeatures().c_str()));
     RTABMAP_PARAM(Vis, CorType,                   int,   0,     "Correspondences computation approach: 0=Features Matching, 1=Optical Flow");
-    RTABMAP_PARAM(Vis, CorNNType,                 int,   1,     uFormat("[%s=0] kNNFlannNaive=0, kNNFlannKdTree=1, kNNFlannLSH=2, kNNBruteForce=3, kNNBruteForceGPU=4, BruteForceCrossCheck=5, SuperGlue=6, GMS=7. Used for features matching approach.", kVisCorType().c_str()));
+    RTABMAP_PARAM(Vis, CorNNType,                 int,   1,     uFormat("[%s=0] kNNFlannNaive=0, kNNFlannKdTree=1, kNNFlannLSH=2, kNNBruteForce=3, kNNBruteForceGPU=4, BruteForceCrossCheck=5, SuperGlue=6, GMS=7, LightGlue=8. Used for features matching approach.", kVisCorType().c_str()));
     RTABMAP_PARAM(Vis, CorNNDR,                   float, 0.8,   uFormat("[%s=0] NNDR: nearest neighbor distance ratio. Used for knn features matching approach.", kVisCorType().c_str()));
     RTABMAP_PARAM(Vis, CorGuessWinSize,           int,   40,    uFormat("[%s=0] Matching window size (pixels) around projected points when a guess transform is provided to find correspondences. 0 means disabled.", kVisCorType().c_str()));
     RTABMAP_PARAM(Vis, CorGuessMatchToProjection, bool,  false, uFormat("[%s=0] Match frame's corners to source's projected points (when guess transform is provided) instead of projected points to frame's corners.", kVisCorType().c_str()));

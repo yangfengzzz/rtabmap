@@ -39,6 +39,7 @@ class Feature2D;
 
 #ifdef RTABMAP_TORCH
 class SGMatcher;
+class LGMatcher;
 #endif
 
 // Visual registration
@@ -112,6 +113,7 @@ private:
 
 #ifdef RTABMAP_TORCH
 	SGMatcher * _superGlue;
+	LGMatcher * _lightGlue;
 #endif
 };
 

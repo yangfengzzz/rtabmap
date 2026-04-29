@@ -58,6 +58,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #ifdef RTABMAP_TORCH
+	#include "lightglue_torch/LightGlue.h"
 	#include "superglue_torch/SuperGlue.h"
 #endif
 
@@ -100,7 +101,8 @@ RegistrationVis::RegistrationVis(const ParametersMap & parameters, Registration 
 		_detectorTo(0)
 #ifdef RTABMAP_TORCH
 		,
-		_superGlue(0)
+		_superGlue(0),
+		_lightGlue(0)
 #endif
 {
 	_featureParameters = Parameters::getDefaultParameters();
@@ -212,6 +214,47 @@ void RegistrationVis::parseParameters(const ParametersMap & parameters)
 		}
 #endif
 	}
+	else if(_nnType == 8)
+	{
+#ifndef RTABMAP_TORCH
+		UWARN("%s is set to 8 but RTAB-Map is not built with Torch support, using default %d.",
+				Parameters::kVisCorNNType().c_str(), Parameters::defaultVisCorNNType());
+		_nnType = Parameters::defaultVisCorNNType();
+#else
+		int nLayers = _lightGlue?_lightGlue->nLayers():Parameters::defaultLightGlueNLayers();
+		float filterThreshold = _lightGlue?_lightGlue->filterThreshold():Parameters::defaultLightGlueFilterThreshold();
+		float depthConfidence = _lightGlue?_lightGlue->depthConfidence():Parameters::defaultLightGlueDepthConfidence();
+		float widthConfidence = _lightGlue?_lightGlue->widthConfidence():Parameters::defaultLightGlueWidthConfidence();
+		std::string path = _lightGlue?_lightGlue->path():Parameters::defaultLightGlueWeightsPath();
+		bool cuda = _lightGlue?_lightGlue->cuda():Parameters::defaultLightGlueCuda();
+		Parameters::parse(parameters, Parameters::kLightGlueNLayers(), nLayers);
+		Parameters::parse(parameters, Parameters::kLightGlueFilterThreshold(), filterThreshold);
+		Parameters::parse(parameters, Parameters::kLightGlueDepthConfidence(), depthConfidence);
+		Parameters::parse(parameters, Parameters::kLightGlueWidthConfidence(), widthConfidence);
+		Parameters::parse(parameters, Parameters::kLightGlueWeightsPath(), path);
+		Parameters::parse(parameters, Parameters::kLightGlueCuda(), cuda);
+		if(path.empty())
+		{
+			UERROR("%s parameter should be set to use native LightGlue matching (%s=8), using default %d.",
+					Parameters::kLightGlueWeightsPath().c_str(),
+					Parameters::kVisCorNNType().c_str(),
+					Parameters::defaultVisCorNNType());
+			_nnType = Parameters::defaultVisCorNNType();
+		}
+		else
+		{
+			delete _lightGlue;
+			_lightGlue = new LGMatcher(path, filterThreshold, nLayers, depthConfidence, widthConfidence, cuda);
+			if(!_lightGlue->isValid())
+			{
+				UERROR("Failed to initialize native LightGlue matcher, using default %d.", Parameters::defaultVisCorNNType());
+				delete _lightGlue;
+				_lightGlue = 0;
+				_nnType = Parameters::defaultVisCorNNType();
+			}
+		}
+#endif
+	}
 #if !defined(HAVE_OPENCV_XFEATURES2D) || (CV_MAJOR_VERSION == 3 && (CV_MINOR_VERSION<4 || CV_MINOR_VERSION==4 && CV_SUBMINOR_VERSION<1))
 	else if(_nnType == 7)
 	{
@@ -303,6 +346,7 @@ RegistrationVis::~RegistrationVis()
 	delete _detectorTo;
 #ifdef RTABMAP_TORCH
 	delete _superGlue;
+	delete _lightGlue;
 #endif
 }
 
@@ -1381,15 +1425,12 @@ Transform RegistrationVis::computeTransformationImpl(
 					// match between all descriptors
 					std::list<int> fromWordIds;
 					std::list<int> toWordIds;
-#ifdef RTABMAP_PYTHON
-					if(_nnType == 5 || (_nnType == 6
+					if(_nnType == 5 ||
 #ifdef RTABMAP_TORCH
-							&& _superGlue
+							(_nnType == 6 && _superGlue) ||
+							(_nnType == 8 && _lightGlue) ||
 #endif
-							) || _nnType==7)
-#else
-					if(_nnType == 5 || _nnType == 7) // bruteforce cross check or GMS
-#endif
+							_nnType == 7)
 					{
 						std::vector<int> fromWordIdsV(descriptorsFrom.rows);
 						for (int i = 0; i < descriptorsFrom.rows; ++i)
@@ -1418,11 +1459,26 @@ Transform RegistrationVis::computeTransformationImpl(
 								UDEBUG("Native SuperGlue matching");
 								matches = _superGlue->match(descriptorsTo, descriptorsFrom, kptsTo, kptsFrom, models[0].imageSize());
 							}
+							else if(_nnType == 8 && _lightGlue &&
+								descriptorsTo.cols == descriptorsFrom.cols &&
+								descriptorsTo.rows == (int)kptsTo.size() &&
+								descriptorsTo.type() == CV_32F &&
+								descriptorsFrom.type() == CV_32F &&
+								descriptorsFrom.rows == (int)kptsFrom.size() &&
+								models.size() == 1)
+							{
+								UDEBUG("Native LightGlue matching");
+								matches = _lightGlue->match(descriptorsTo, descriptorsFrom, kptsTo, kptsFrom, models[0].imageSize());
+							}
 							else
 							{
 								if(_nnType == 6 && _superGlue)
 								{
 									UDEBUG("Invalid inputs for native SuperGlue matching (desc type=%d, only float 256D descriptors supported, multicam not supported), doing bruteforce matching instead.", descriptorsFrom.type());
+								}
+								else if(_nnType == 8 && _lightGlue)
+								{
+									UDEBUG("Invalid inputs for native LightGlue matching (desc type=%d, only float 256D descriptors supported, multicam not supported), doing bruteforce matching instead.", descriptorsFrom.type());
 								}
 #else
 							{

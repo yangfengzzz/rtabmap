@@ -64,6 +64,7 @@ void showUsage()
 			"   rtabmap-matcher --Vis/CorNNType 5 --Vis/PnPReprojError 3 from.png to.png\n"
 			"   rtabmap-matcher --Vis/CorNNDR 0.8 from.png to.png\n"
 			"   rtabmap-matcher --Vis/FeatureType 11 --SuperPoint/ModelPath \"superpoint.pt\" --Vis/CorNNType 6 --SuperGlue/WeightsPath \"superglue_indoor_native.pth\" from.png to.png\n"
+			"   rtabmap-matcher --Vis/FeatureType 11 --SuperPoint/ModelPath \"superpoint.pt\" --Vis/CorNNType 8 --LightGlue/WeightsPath \"superpoint_lightglue_native.pth\" from.png to.png\n"
 			"   rtabmap-matcher --calibration calib.yaml --from_depth from_depth.png --to_depth to_depth.png from.png to.png\n"
 			"   rtabmap-matcher --calibration calibFrom.yaml --calibration_to calibTo.yaml --from_depth from_depth.png --to_depth to_depth.png from.png to.png\n"
 			"   rtabmap-matcher --calibration calib.yaml --Vis/FeatureType 2 --Vis/MaxFeatures 10000 --Vis/CorNNType 7 from.png to.png\n"
@@ -346,21 +347,25 @@ int main(int argc, char * argv[])
 		// Visualization
 		//////////////////
 
-		if(reg.getNNType()==6 &&
+		if((reg.getNNType()==6 || reg.getNNType()==8) &&
 		   !dataFrom.getWordsDescriptors().empty() &&
 		   dataFrom.getWordsDescriptors().type()!=CV_32F)
 		{
-			UWARN("SuperGlue is selected for matching but binary features "
+			UWARN("%s is selected for matching but binary features "
 				  "are not compatible. BruteForce with CrossCheck (%s=5) "
-				  "has been used instead.", Parameters::kVisCorNNType().c_str());
+				  "has been used instead.",
+				  reg.getNNType()==6?"SuperGlue":"LightGlue",
+				  Parameters::kVisCorNNType().c_str());
 		}
 
 		QApplication app(argc, argv);
 		QDialog dialog;
 		float reprojError = Parameters::defaultVisPnPReprojError();
 		std::string superGluePath;
+		std::string lightGluePath;
 		Parameters::parse(parameters, Parameters::kVisPnPReprojError(), reprojError);
 		Parameters::parse(parameters, Parameters::kSuperGlueWeightsPath(), superGluePath);
+		Parameters::parse(parameters, Parameters::kLightGlueWeightsPath(), lightGluePath);
 		dialog.setWindowTitle(QString("Matches (%1/%2) %3 sec [%4=%5 (%6) %7=%8 (%9)%10 %11=%12 (%13) %14=%15]")
 				.arg(info.inliers)
 				.arg(info.matches)
@@ -373,6 +378,7 @@ int main(int argc, char * argv[])
 				.arg(reg.getNNType()<VWDictionary::kNNUndef?VWDictionary::nnStrategyName((VWDictionary::NNStrategy)reg.getNNType()).c_str():
 						reg.getNNType()==5||(reg.getNNType()==6&&!dataFrom.getWordsDescriptors().empty()&& dataFrom.getWordsDescriptors().type()!=CV_32F)?"BFCrossCheck":
 						reg.getNNType()==6?QString("SuperGlue:%1").arg(UFile::getName(superGluePath).c_str()):
+						reg.getNNType()==8?QString("LightGlue:%1").arg(UFile::getName(lightGluePath).c_str()):
 						reg.getNNType()==7?"GMS":"?")
 				.arg(reg.getNNType()<5?QString(" %1=%2").arg(Parameters::kVisCorNNDR().c_str()).arg(reg.getNNDR()):"")
 				.arg(Parameters::kVisEstimationType().c_str())

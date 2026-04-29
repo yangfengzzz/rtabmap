@@ -34,6 +34,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <opencv2/core/version.hpp>
 #include <pcl/pcl_config.h>
 #include <vtkVersion.h>
+#include <QGridLayout>
+#include <QLabel>
 
 namespace rtabmap {
 
@@ -42,6 +44,25 @@ AboutDialog::AboutDialog(QWidget * parent) :
 {
 	_ui = new Ui_aboutDialog();
 	_ui->setupUi(this);
+	if(QGridLayout * featuresLayout = this->findChild<QGridLayout*>("gridLayout_2"))
+	{
+		QLabel * lightGlueLabel = new QLabel(tr("With LightGlue :"), this);
+		lightGlueLabel->setWordWrap(true);
+		QLabel * lightGlueValue = new QLabel(this);
+		lightGlueValue->setAlignment(Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter);
+		lightGlueValue->setWordWrap(true);
+		QLabel * lightGlueLicense = new QLabel(tr("Apache 2 / User weights"), this);
+		lightGlueLicense->setWordWrap(true);
+#ifdef RTABMAP_TORCH
+		lightGlueValue->setText("Yes");
+#else
+		lightGlueValue->setText("No");
+		lightGlueLicense->setEnabled(false);
+#endif
+		featuresLayout->addWidget(lightGlueLabel, 45, 0);
+		featuresLayout->addWidget(lightGlueValue, 45, 1);
+		featuresLayout->addWidget(lightGlueLicense, 45, 2);
+	}
 	QString version = Parameters::getVersion().c_str();
 	QString cv_version = CV_VERSION;
 #if CV_MAJOR_VERSION < 3

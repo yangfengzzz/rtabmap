@@ -373,6 +373,7 @@ private Q_SLOTS:
 	void changeIcpPMConfigPath();
 	void changeSuperPointModelPath();
 	void changeSuperGlueWeightsPath();
+	void changeLightGlueWeightsPath();
 	void changePyDescriptorPath();
 	void changePyDetectorPath();
 	void readSettingsEnd();
@@ -454,6 +455,13 @@ private:
 	QStandardItemModel * _indexModel;
 	bool _initialized;
 	bool _monitoringState;
+	QGroupBox * _lightGlueGroup;
+	QLineEdit * _lightGluePath;
+	QSpinBox * _lightGlueLayers;
+	QDoubleSpinBox * _lightGlueFilterThreshold;
+	QDoubleSpinBox * _lightGlueDepthConfidence;
+	QDoubleSpinBox * _lightGlueWidthConfidence;
+	QCheckBox * _lightGlueCuda;
 
 	QProgressDialog * _progressDialog;
 

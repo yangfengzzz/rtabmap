@@ -17,7 +17,7 @@ This guide is for answering two questions quickly:
   - `WITH_TORCH=OFF`
   - `WITH_PYTHON=OFF`
 
-The last two defaults matter: a stock configure will not include the SuperPoint/SuperGlue path unless explicitly enabled.
+The last two defaults matter: a stock configure will not include the SuperPoint/SuperGlue/LightGlue path unless explicitly enabled.
 
 ## Feature Matrix
 
@@ -26,6 +26,7 @@ The last two defaults matter: a stock configure will not include the SuperPoint/
 | SuperPoint Torch | `WITH_TORCH=ON` | libtorch | `CMakeLists.txt`, `corelib/src/Features2d.cpp` | `Vis/FeatureType 11`, `SuperPoint/*` |
 | SuperPoint Rpautrat | `WITH_TORCH=ON`, `WITH_PYTHON=ON` | libtorch + Python3 | `corelib/src/Features2d.cpp`, `corelib/src/python/rtabmap_superpoint_rpautrat.py` | `Vis/FeatureType 16`, `SuperPointRpautrat/*` |
 | Native SuperGlue | `WITH_TORCH=ON` | libtorch + user-supplied converted weights | `corelib/src/superglue_torch/`, `RegistrationVis.*` | `Vis/CorNNType 6`, `SuperGlue/*` |
+| Native LightGlue | `WITH_TORCH=ON` | libtorch + user-supplied converted weights | `corelib/src/lightglue_torch/`, `RegistrationVis.*` | `Vis/CorNNType 8`, `LightGlue/*` |
 | RealSense2 / D455 | `WITH_REALSENSE2=ON` | librealsense2 | `corelib/src/camera/CameraRealSense2.cpp`, `cmake_modules/FindRealSense2.cmake` | `CameraRealSense2`, tool driver `11` |
 | GUI capability display | usually `WITH_QT=ON` | Qt | `guilib/src/AboutDialog.cpp`, `guilib/src/PreferencesDialog.cpp` | About and Preferences dialogs |
 
@@ -36,6 +37,7 @@ During CMake configure, inspect the emitted feature summary lines. For this repo
 - `With SuperPoint`
 - `With Superpoint Rpautrat`
 - `With SuperGlue`
+- `With LightGlue`
 - `With Python3`
 - `With RealSense2`
 
@@ -96,6 +98,15 @@ The parameters you usually need are defined in `corelib/include/rtabmap/core/Par
   - `SuperGlue/Iterations`
   - `SuperGlue/Threshold`
   - `SuperGlue/Cuda`
+
+- Native LightGlue:
+  - `Vis/CorNNType 8`
+  - `LightGlue/WeightsPath`
+  - `LightGlue/NLayers`
+  - `LightGlue/FilterThreshold`
+  - `LightGlue/DepthConfidence`
+  - `LightGlue/WidthConfidence`
+  - `LightGlue/Cuda`
 
 ## Capability Exposure Locations
 
