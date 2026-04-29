@@ -1,0 +1,10 @@
+ADD_EXECUTABLE(export3dgs_dataset main.cpp)
+
+TARGET_LINK_LIBRARIES(export3dgs_dataset rtabmap_core)
+
+SET_TARGET_PROPERTIES(export3dgs_dataset
+	PROPERTIES OUTPUT_NAME ${PROJECT_PREFIX}-export3dgs_dataset)
+
+INSTALL(TARGETS export3dgs_dataset
+		RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT runtime
+		BUNDLE DESTINATION "${CMAKE_BUNDLE_LOCATION}" COMPONENT runtime)

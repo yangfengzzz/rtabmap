@@ -11,6 +11,7 @@ ADD_SUBDIRECTORY( Recovery )
 ADD_SUBDIRECTORY( Reprocess )
 ADD_SUBDIRECTORY( DetectMoreLoopClosures )
 ADD_SUBDIRECTORY( Export )
+ADD_SUBDIRECTORY( Export3DGS )
 ADD_SUBDIRECTORY( Report )
 ADD_SUBDIRECTORY( Info )
 ADD_SUBDIRECTORY( CleanupLocalGrids )
@@ -34,5 +35,4 @@ IF(TARGET rtabmap_gui)
 ELSE()
    MESSAGE(STATUS "RTAB-Map GUI lib is not built, some tools won't be built...")
 ENDIF()
-
 
