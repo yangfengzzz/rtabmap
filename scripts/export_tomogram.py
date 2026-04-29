@@ -108,6 +108,41 @@ def resolve_output_dir(config, cli_output_dir: str | None) -> Path:
     return out_path.resolve()
 
 
+def infer_ground_height(points: np.ndarray) -> float:
+    z = points[:, 2]
+    z = z[np.isfinite(z)]
+    if z.size == 0:
+        return 0.0
+
+    low = float(np.percentile(z, 1.0))
+    mid = float(np.percentile(z, 50.0))
+    if mid <= low:
+        return float(np.percentile(z, 5.0))
+
+    bin_size = 0.1
+    start = np.floor(low / bin_size) * bin_size
+    stop = np.ceil(mid / bin_size) * bin_size + bin_size
+    bins = np.arange(start, stop + 1e-6, bin_size)
+    if bins.size < 3:
+        return float(np.percentile(z, 5.0))
+
+    hist, edges = np.histogram(z, bins=bins)
+    if not hist.size or hist.max() == 0:
+        return float(np.percentile(z, 5.0))
+
+    min_support = max(int(hist.max() * 0.25), 1000)
+    candidates = []
+    for i in range(1, len(hist) - 1):
+        if hist[i] < min_support:
+            continue
+        if hist[i] >= hist[i - 1] and hist[i] >= hist[i + 1]:
+            candidates.append(i)
+
+    if candidates:
+        return float(edges[candidates[0]])
+    return float(np.percentile(z, 5.0))
+
+
 def export_cloud_from_db(db_path: Path, output_dir: Path, base_name: str) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     cmd = [
@@ -130,7 +165,15 @@ def export_cloud_from_db(db_path: Path, output_dir: Path, base_name: str) -> Pat
 def compute_mapping_metadata(points: np.ndarray, cfg):
     points_max = np.max(points, axis=0)
     points_min = np.min(points, axis=0)
-    points_min[-1] = cfg.map.ground_h
+    ground_h = cfg.map.ground_h
+    if isinstance(ground_h, str):
+        if ground_h.lower() != "auto":
+            raise ValueError(f"Unsupported map.ground_h value: {ground_h}")
+        ground_h = infer_ground_height(points)
+        print(f"Inferred ground_h: {ground_h:.3f}")
+    else:
+        ground_h = float(ground_h)
+    points_min[-1] = ground_h
     map_dim_x = int(np.ceil((points_max[0] - points_min[0]) / cfg.map.resolution)) + 4
     map_dim_y = int(np.ceil((points_max[1] - points_min[1]) / cfg.map.resolution)) + 4
     n_slice_init = int(np.ceil((points_max[2] - points_min[2]) / cfg.map.slice_dh))
