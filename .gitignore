@@ -13,3 +13,6 @@ tags
 build_*
 *.bak
 /.venv-rtabmap
+__pycache__/
+*.py[cod]
+*.pyo
