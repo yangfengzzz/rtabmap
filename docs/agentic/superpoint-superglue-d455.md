@@ -5,8 +5,8 @@ This is the highest-value task path for future agent work in this repo: build RT
 ## What Exists In The Repo Already
 
 - SuperPoint Torch support exists behind `WITH_TORCH` in `CMakeLists.txt`.
-- SuperGlue is integrated as a Python matcher bridge, not a native C++ matcher.
-- The bundled wrapper lives at `corelib/src/python/rtabmap_superglue.py`.
+- SuperGlue matcher mode `Vis/CorNNType=6` is a native libtorch backend under `corelib/src/superglue_torch/`.
+- Upstream SuperGlue checkpoints should be converted once with `scripts/convert_superglue_weights.py`.
 - The RealSense D400 family, including D455, should go through `CameraRealSense2`, not the legacy RealSense driver.
 - `tools/Matcher/main.cpp` already shows a canonical SuperPoint + SuperGlue invocation example.
 - `tools/CameraRGBD/main.cpp` exposes RealSense2 as driver `11`.
@@ -18,7 +18,6 @@ For the combined workflow, the minimum build toggles are:
 ```bash
 cmake -S . -B build \
   -DWITH_TORCH=ON \
-  -DWITH_PYTHON=ON \
   -DWITH_REALSENSE2=ON
 ```
 
@@ -26,8 +25,6 @@ Interpretation:
 
 - `WITH_TORCH=ON`
   - enables native SuperPoint Torch support
-- `WITH_PYTHON=ON`
-  - enables `PyMatcher` and embedded Python integration used by SuperGlue
 - `WITH_REALSENSE2=ON`
   - enables librealsense2-backed camera support for the D455
 
@@ -36,6 +33,7 @@ Interpretation:
 The CMake summary should indicate all of the following:
 
 - `With SuperPoint = YES`
+- `With SuperGlue = YES`
 - `With Python3 = YES`
 - `With RealSense2 = YES`
 
@@ -50,8 +48,8 @@ That Rpautrat path is a different SuperPoint integration and depends on both Tor
 The repo contains wrappers, not all upstream model assets.
 
 - SuperPoint Torch needs a `.pt` model file referenced by `SuperPoint/ModelPath`.
-- `corelib/src/python/rtabmap_superglue.py` is intended to be copied into a SuperGlue checkout.
-- That wrapper imports `models.matching.SuperGlue`, so the runtime Python environment must be able to resolve the upstream SuperGlue package layout.
+- SuperGlue needs a converted native weights file referenced by `SuperGlue/WeightsPath`.
+- `scripts/convert_superglue_weights.py` converts upstream OrderedDict checkpoints into a plain-dict archive that libtorch C++ can read directly.
 
 Implication for agents:
 
@@ -71,7 +69,7 @@ rtabmap-matcher \
   --Vis/FeatureType 11 \
   --SuperPoint/ModelPath "superpoint.pt" \
   --Vis/CorNNType 6 \
-  --PyMatcher/Path "~/SuperGluePretrainedNetwork/rtabmap_superglue.py" \
+  --SuperGlue/WeightsPath "superglue_indoor_native.pth" \
   from.png to.png
 ```
 
@@ -80,16 +78,15 @@ Interpretation:
 - `Vis/FeatureType 11`
   - use SuperPoint Torch
 - `Vis/CorNNType 6`
-  - use Python matcher mode
-- `PyMatcher/Path`
-  - point at the wrapper inside the external SuperGlue checkout
+  - use native SuperGlue matcher mode
+- `SuperGlue/WeightsPath`
+  - point at the converted native checkpoint
 
 In practice, also expect to set or verify:
 
-- `PyMatcher/Model=indoor` or `outdoor`
-- `PyMatcher/Cuda=true|false`
-- `PyMatcher/Threshold`
-- `PyMatcher/Iterations`
+- `SuperGlue/Cuda=true|false`
+- `SuperGlue/Threshold`
+- `SuperGlue/Iterations`
 
 ## D455 Validation Path
 
@@ -124,8 +121,8 @@ These are the places to inspect when a D455 task mentions stream format, synchro
 - Build flags and summary: `CMakeLists.txt`
 - Feature parameters: `corelib/include/rtabmap/core/Parameters.h`
 - SuperPoint implementation: `corelib/src/Features2d.cpp`
-- SuperGlue wrapper: `corelib/src/python/rtabmap_superglue.py`
-- Python bridge: `corelib/include/rtabmap/core/PythonInterface.h`
+- Native SuperGlue matcher: `corelib/src/superglue_torch/SuperGlue.cpp`
+- Checkpoint converter: `scripts/convert_superglue_weights.py`
 - RealSense2 backend: `corelib/src/camera/CameraRealSense2.cpp`
 - Camera validation tool: `tools/CameraRGBD/main.cpp`
 - Matcher validation tool: `tools/Matcher/main.cpp`
@@ -133,7 +130,7 @@ These are the places to inspect when a D455 task mentions stream format, synchro
 
 ## Recommended Agent Debug Sequence
 
-1. Verify `WITH_TORCH`, `WITH_PYTHON`, and `WITH_REALSENSE2` in `build/CMakeCache.txt`.
+1. Verify `WITH_TORCH` and `WITH_REALSENSE2` in `build/CMakeCache.txt`.
 2. Re-run CMake if any of them are disabled or stale.
 3. Build `rtabmap-matcher` and `rtabmap-cameraRGBD` first.
 4. Validate SuperPoint + SuperGlue offline with images.
@@ -144,14 +141,12 @@ These are the places to inspect when a D455 task mentions stream format, synchro
 
 - `WITH_TORCH=OFF`
   - SuperPoint selection falls back and warnings appear at runtime.
-- `WITH_PYTHON=OFF`
-  - `PyMatcher` path is unavailable even if SuperPoint is built.
 - librealsense2 not found
   - D455 support compiles out or reports unavailable at runtime.
-- wrapper copied incorrectly
-  - `PyMatcher/Path` points to a file that cannot import `models.matching.SuperGlue`.
+- raw upstream checkpoint used directly
+  - convert it first with `scripts/convert_superglue_weights.py` or the native loader will reject it.
 - model assets missing
-  - compiled support exists, but runtime fails when loading `.pt` or Python-side weights.
+  - compiled support exists, but runtime fails when loading `.pt` or converted SuperGlue weights.
 
 ## What To Say In A Handoff
 

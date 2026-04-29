@@ -342,6 +342,10 @@ class RTABMAP_CORE_EXPORT Parameters
     RTABMAP_PARAM(SuperPoint, NMS,           bool,  true,  "If true, non-maximum suppression is applied to detected keypoints.");
     RTABMAP_PARAM(SuperPoint, NMSRadius,     int,  4,      uFormat("[%s=true] Minimum distance (pixels) between keypoints.", kSuperPointNMS().c_str()));
     RTABMAP_PARAM(SuperPoint, Cuda,          bool, true,   "Use Cuda device for Torch, otherwise CPU device is used by default.");
+    RTABMAP_PARAM_STR(SuperGlue, WeightsPath, "",          "[Required] Path to native SuperGlue weights (*.pth). Upstream SuperGlue checkpoints should first be converted with scripts/convert_superglue_weights.py.");
+    RTABMAP_PARAM(SuperGlue, Iterations,     int, 20,      "Sinkhorn iterations used by native SuperGlue.");
+    RTABMAP_PARAM(SuperGlue, Threshold,      float, 0.2,   "Match threshold used by native SuperGlue.");
+    RTABMAP_PARAM(SuperGlue, Cuda,           bool, true,   "Use Cuda device for native SuperGlue, otherwise CPU device is used by default.");
 
     RTABMAP_PARAM_STR(PyDetector, Path,       "",           "Path to python script file (see available ones in rtabmap/corelib/src/python/*). See the header to see where the script should be copied.");
 	RTABMAP_PARAM(PyDetector, Cuda,           bool, true,   "Use cuda.");
@@ -734,12 +738,6 @@ class RTABMAP_CORE_EXPORT Parameters
 #endif
 
     // Features matching approaches
-    RTABMAP_PARAM_STR(PyMatcher, Path,       "",           "Path to python script file (see available ones in rtabmap/corelib/src/python/*). See the header to see where the script should be copied.");
-	RTABMAP_PARAM(PyMatcher, Iterations,     int, 20,      "Sinkhorn iterations. Used by SuperGlue.");
-	RTABMAP_PARAM(PyMatcher, Threshold,      float, 0.2,   "Used by SuperGlue.");
-	RTABMAP_PARAM(PyMatcher, Cuda,           bool, true,   "Used by SuperGlue.");
-	RTABMAP_PARAM_STR(PyMatcher, Model,        "indoor",   "For SuperGlue, set only \"indoor\" or \"outdoor\". For OANet, set path to one of the pth file (e.g., \"OANet/model/gl3d/sift-4000/model_best.pth\").");
-
 	RTABMAP_PARAM(GMS, WithRotation,         bool, false,   "Take rotation transformation into account.");
 	RTABMAP_PARAM(GMS, WithScale,            bool, false,   "Take scale transformation into account.");
 	RTABMAP_PARAM(GMS, ThresholdFactor,      double, 6.0,   "The higher, the less matches.");

@@ -1166,14 +1166,21 @@ PreferencesDialog::PreferencesDialog(QWidget * parent) :
 	_ui->spinBox_sptorch_minDistance->setObjectName(Parameters::kSuperPointNMSRadius().c_str());
 	_ui->checkBox_sptorch_cuda->setObjectName(Parameters::kSuperPointCuda().c_str());
 
-	// PyMatcher
-	_ui->lineEdit_pymatcher_path->setObjectName(Parameters::kPyMatcherPath().c_str());
-	connect(_ui->toolButton_pymatcher_path, SIGNAL(clicked()), this, SLOT(changePyMatcherPath()));
-	_ui->pymatcher_matchThreshold->setObjectName(Parameters::kPyMatcherThreshold().c_str());
-	_ui->pymatcher_iterations->setObjectName(Parameters::kPyMatcherIterations().c_str());
-	_ui->checkBox_pymatcher_cuda->setObjectName(Parameters::kPyMatcherCuda().c_str());
-	_ui->lineEdit_pymatcher_model->setObjectName(Parameters::kPyMatcherModel().c_str());
-	connect(_ui->toolButton_pymatcher_model, SIGNAL(clicked()), this, SLOT(changePyMatcherModel()));
+	// SuperGlue
+	_ui->groupBox_pymatcher->setTitle(tr("SuperGlue"));
+	_ui->label_586->setText(tr("Native libtorch implementation of SuperGlue. "
+			"Use SuperPoint float descriptors with <code>Vis/FeatureType=11</code>. "
+			"Upstream SuperGlue checkpoints should first be converted with "
+			"<code>scripts/convert_superglue_weights.py</code> so the native C++ loader can read them directly."));
+	_ui->label_583->setText(tr("[Required] Path to native SuperGlue weights (*.pth)."));
+	_ui->lineEdit_pymatcher_path->setObjectName(Parameters::kSuperGlueWeightsPath().c_str());
+	connect(_ui->toolButton_pymatcher_path, SIGNAL(clicked()), this, SLOT(changeSuperGlueWeightsPath()));
+	_ui->pymatcher_matchThreshold->setObjectName(Parameters::kSuperGlueThreshold().c_str());
+	_ui->pymatcher_iterations->setObjectName(Parameters::kSuperGlueIterations().c_str());
+	_ui->checkBox_pymatcher_cuda->setObjectName(Parameters::kSuperGlueCuda().c_str());
+	_ui->lineEdit_pymatcher_model->setVisible(false);
+	_ui->toolButton_pymatcher_model->setVisible(false);
+	_ui->label_590->setVisible(false);
 
 	// PyDetector
 	_ui->lineEdit_pydetector_path->setObjectName(Parameters::kPyDetectorPath().c_str());
@@ -5649,37 +5656,20 @@ void PreferencesDialog::changeSuperPointModelPath()
 	}
 }
 
-void PreferencesDialog::changePyMatcherPath()
+void PreferencesDialog::changeSuperGlueWeightsPath()
 {
 	QString path;
 	if(_ui->lineEdit_pymatcher_path->text().isEmpty())
 	{
-		path = QFileDialog::getOpenFileName(this, tr("Select file"), this->getWorkingDirectory(), tr("Python wrapper (*.py)"));
+		path = QFileDialog::getOpenFileName(this, tr("Select file"), this->getWorkingDirectory(), tr("SuperGlue weights (*.pth *.pt)"));
 	}
 	else
 	{
-		path = QFileDialog::getOpenFileName(this, tr("Select file"), _ui->lineEdit_pymatcher_path->text(), tr("Python wrapper (*.py)"));
+		path = QFileDialog::getOpenFileName(this, tr("Select file"), _ui->lineEdit_pymatcher_path->text(), tr("SuperGlue weights (*.pth *.pt)"));
 	}
 	if(!path.isEmpty())
 	{
 		_ui->lineEdit_pymatcher_path->setText(path);
-	}
-}
-
-void PreferencesDialog::changePyMatcherModel()
-{
-	QString path;
-	if(_ui->lineEdit_pymatcher_model->text().isEmpty())
-	{
-		path = QFileDialog::getOpenFileName(this, tr("Select file"), this->getWorkingDirectory(), tr("PyTorch model (*.pth *.pt)"));
-	}
-	else
-	{
-		path = QFileDialog::getOpenFileName(this, tr("Select file"), _ui->lineEdit_pymatcher_model->text(), tr("PyTorch model (*.pth *.pt)"));
-	}
-	if(!path.isEmpty())
-	{
-		_ui->lineEdit_pymatcher_model->setText(path);
 	}
 }
 

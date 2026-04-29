@@ -186,7 +186,7 @@ rtabmap::ParametersMap Parameters::getDefaultOdometryParameters(bool stereo, boo
 			group.compare("Optimizer") == 0 ||
 			group.compare("g2o") == 0 ||
 			group.compare("GTSAM") == 0 ||
-			(vis && (group.compare("Vis") == 0 || group.compare("PyMatcher") == 0 || group.compare("GMS") == 0)) ||
+			(vis && (group.compare("Vis") == 0 || group.compare("SuperGlue") == 0 || group.compare("GMS") == 0)) ||
 			iter->first.compare(kRtabmapPublishRAMUsage())==0 ||
 			iter->first.compare(kRtabmapImagesAlreadyRectified())==0 ||
 			iter->first.compare(kKpByteToFloat())==0)
@@ -263,11 +263,9 @@ const std::map<std::string, std::pair<bool, std::string> > & Parameters::getRemo
 		removedParameters_.insert(std::make_pair("Icp/PMOutlierRatio",   std::make_pair(true, Parameters::kIcpOutlierRatio())));
 
 		// 0.20.
-		removedParameters_.insert(std::make_pair("SuperGlue/Path",           std::make_pair(true, Parameters::kPyMatcherPath())));
-		removedParameters_.insert(std::make_pair("SuperGlue/Iterations",     std::make_pair(true, Parameters::kPyMatcherIterations())));
-		removedParameters_.insert(std::make_pair("SuperGlue/MatchThreshold", std::make_pair(true, Parameters::kPyMatcherThreshold())));
-		removedParameters_.insert(std::make_pair("SuperGlue/Cuda",           std::make_pair(true, Parameters::kPyMatcherCuda())));
-		removedParameters_.insert(std::make_pair("SuperGlue/Indoor",         std::make_pair(false, Parameters::kPyMatcherModel())));
+		removedParameters_.insert(std::make_pair("SuperGlue/Path",           std::make_pair(true, Parameters::kSuperGlueWeightsPath())));
+		removedParameters_.insert(std::make_pair("SuperGlue/MatchThreshold", std::make_pair(true, Parameters::kSuperGlueThreshold())));
+		removedParameters_.insert(std::make_pair("SuperGlue/Indoor",         std::make_pair(false, Parameters::kSuperGlueWeightsPath())));
 
 		removedParameters_.insert(std::make_pair("Vis/CorCrossCheck",   std::make_pair(false, Parameters::kVisCorNNType())));
 		removedParameters_.insert(std::make_pair("SPTorch/ModelPath",   std::make_pair(true,  Parameters::kSuperPointModelPath())));
@@ -654,6 +652,12 @@ ParametersMap Parameters::parseArguments(int argc, char * argv[], bool onlyParam
 				std::cout << str << std::setw(spacing - str.size()) << "false" << std::endl;
 #endif
 				str = "With SuperPoint Torch:";
+#ifdef RTABMAP_TORCH
+				std::cout << str << std::setw(spacing - str.size()) << "true" << std::endl;
+#else
+				std::cout << str << std::setw(spacing - str.size()) << "false" << std::endl;
+#endif
+				str = "With SuperGlue:";
 #ifdef RTABMAP_TORCH
 				std::cout << str << std::setw(spacing - str.size()) << "true" << std::endl;
 #else

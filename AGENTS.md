@@ -44,7 +44,7 @@ This repository is large, dependency-heavy, and easy to misread if you start cha
   1. CMake option and dependency detection
   2. Core implementation or abstraction
   3. User-facing exposure in GUI, tools, or parameters
-- Treat `WITH_TORCH`, `WITH_PYTHON`, and `WITH_REALSENSE2` as linked concerns when the task involves SuperPoint/SuperGlue with a D455.
+- Treat `WITH_TORCH` and `WITH_REALSENSE2` as the core concerns for the native SuperPoint/SuperGlue + D455 path. `WITH_PYTHON` may still matter for other optional Python features, but it is no longer required for `Vis/CorNNType=6`.
 - Do not assume the existing `build/` directory has the required options enabled. Verify with `CMakeCache.txt` or rerun configuration.
 - Do not remove or simplify platform guards (`#ifdef RTABMAP_*`, CMake options, SDK checks) unless the task explicitly requires it.
 - Prefer validating with a focused tool or example before attempting full app runtime verification.
@@ -65,8 +65,9 @@ This repository is large, dependency-heavy, and easy to misread if you start cha
 
 ## Common Pitfalls
 
-- SuperGlue in RTAB-Map is exposed through `PyMatcher`, not a native C++ matcher backend.
-- `WITH_TORCH=ON` alone is not enough for the Python-based paths; `WITH_PYTHON=ON` is also needed for `PyMatcher` and Rpautrat-based integration.
+- SuperGlue matcher mode `Vis/CorNNType=6` is now a native libtorch backend configured through `SuperGlue/*`, not `PyMatcher/*`.
+- Upstream SuperGlue checkpoints should be converted once with `scripts/convert_superglue_weights.py` before using them with the native backend.
+- `WITH_PYTHON=ON` may still be useful for other Python features and Rpautrat-based integration, but it is not required for native SuperGlue.
 - D455 uses the RealSense2 path, not the legacy RealSense driver.
 - Parameter names may have legacy aliases. Check `corelib/src/Parameters.cpp` before assuming a parameter is unused or dead.
 - GUI availability labels are compile-time/runtime reflections, so a missing capability may be a build problem rather than a UI problem.

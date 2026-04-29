@@ -25,7 +25,7 @@ The last two defaults matter: a stock configure will not include the SuperPoint/
 | --- | --- | --- | --- | --- |
 | SuperPoint Torch | `WITH_TORCH=ON` | libtorch | `CMakeLists.txt`, `corelib/src/Features2d.cpp` | `Vis/FeatureType 11`, `SuperPoint/*` |
 | SuperPoint Rpautrat | `WITH_TORCH=ON`, `WITH_PYTHON=ON` | libtorch + Python3 | `corelib/src/Features2d.cpp`, `corelib/src/python/rtabmap_superpoint_rpautrat.py` | `Vis/FeatureType 16`, `SuperPointRpautrat/*` |
-| SuperGlue via PyMatcher | `WITH_PYTHON=ON` | Python3 + external SuperGlue checkout | `corelib/src/python/rtabmap_superglue.py`, `RegistrationVis.*` | `Vis/CorNNType 6`, `PyMatcher/*` |
+| Native SuperGlue | `WITH_TORCH=ON` | libtorch + user-supplied converted weights | `corelib/src/superglue_torch/`, `RegistrationVis.*` | `Vis/CorNNType 6`, `SuperGlue/*` |
 | RealSense2 / D455 | `WITH_REALSENSE2=ON` | librealsense2 | `corelib/src/camera/CameraRealSense2.cpp`, `cmake_modules/FindRealSense2.cmake` | `CameraRealSense2`, tool driver `11` |
 | GUI capability display | usually `WITH_QT=ON` | Qt | `guilib/src/AboutDialog.cpp`, `guilib/src/PreferencesDialog.cpp` | About and Preferences dialogs |
 
@@ -35,6 +35,7 @@ During CMake configure, inspect the emitted feature summary lines. For this repo
 
 - `With SuperPoint`
 - `With Superpoint Rpautrat`
+- `With SuperGlue`
 - `With Python3`
 - `With RealSense2`
 
@@ -61,7 +62,6 @@ Re-run configure with explicit options when needed:
 ```bash
 cmake -S . -B build \
   -DWITH_TORCH=ON \
-  -DWITH_PYTHON=ON \
   -DWITH_REALSENSE2=ON
 ```
 
@@ -90,13 +90,12 @@ The parameters you usually need are defined in `corelib/include/rtabmap/core/Par
   - `SuperPointRpautrat/WeightsPath`
   - `SuperPointRpautrat/ModelPath`
 
-- SuperGlue / PyMatcher:
+- Native SuperGlue:
   - `Vis/CorNNType 6`
-  - `PyMatcher/Path`
-  - `PyMatcher/Iterations`
-  - `PyMatcher/Threshold`
-  - `PyMatcher/Cuda`
-  - `PyMatcher/Model`
+  - `SuperGlue/WeightsPath`
+  - `SuperGlue/Iterations`
+  - `SuperGlue/Threshold`
+  - `SuperGlue/Cuda`
 
 ## Capability Exposure Locations
 

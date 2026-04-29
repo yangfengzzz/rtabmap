@@ -37,8 +37,8 @@ namespace rtabmap {
 
 class Feature2D;
 
-#ifdef RTABMAP_PYTHON
-class PyMatcher;
+#ifdef RTABMAP_TORCH
+class SGMatcher;
 #endif
 
 // Visual registration
@@ -110,8 +110,8 @@ private:
 	Feature2D * _detectorFrom;
 	Feature2D * _detectorTo;
 
-#ifdef RTABMAP_PYTHON
-	PyMatcher * _pyMatcher;
+#ifdef RTABMAP_TORCH
+	SGMatcher * _superGlue;
 #endif
 };
 

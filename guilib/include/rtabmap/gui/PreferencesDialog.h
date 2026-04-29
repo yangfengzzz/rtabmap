@@ -372,8 +372,7 @@ private Q_SLOTS:
 	void changeOdometryOpenVINSRightMask();
 	void changeIcpPMConfigPath();
 	void changeSuperPointModelPath();
-	void changePyMatcherPath();
-	void changePyMatcherModel();
+	void changeSuperGlueWeightsPath();
 	void changePyDescriptorPath();
 	void changePyDetectorPath();
 	void readSettingsEnd();

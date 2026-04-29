@@ -49,7 +49,7 @@ This is the center of gravity for most feature work.
 Use this when a task mentions the desktop UI, parameter widgets, or capability visibility.
 
 - `guilib/src/PreferencesDialog.cpp` and `guilib/src/ui/preferencesDialog.ui`
-  - User-editable configuration surfaces for sensors, SuperPoint, PyMatcher, and related options.
+  - User-editable configuration surfaces for sensors, SuperPoint, native SuperGlue, and related options.
 - `guilib/src/AboutDialog.cpp` and `guilib/src/ui/aboutDialog.ui`
   - Runtime display of compiled capability flags like SuperPoint, Python, and RealSense2.
 - `guilib/src/MainWindow.*`

@@ -1420,10 +1420,13 @@ ENDIF()
 
 IF(TORCH_FOUND)
 MESSAGE(STATUS "  With SuperPoint          = YES (License: GPLv3) libtorch=${Torch_VERSION}")
+MESSAGE(STATUS "  With SuperGlue           = YES (License: User-supplied weights) libtorch=${Torch_VERSION}")
 ELSEIF(NOT WITH_TORCH)
 MESSAGE(STATUS "  With SuperPoint          = NO (WITH_TORCH=OFF)")
+MESSAGE(STATUS "  With SuperGlue           = NO (WITH_TORCH=OFF)")
 ELSE()
 MESSAGE(STATUS "  With SuperPoint          = NO (libtorch not found)")
+MESSAGE(STATUS "  With SuperGlue           = NO (libtorch not found)")
 ENDIF()
 
 IF(WITH_PYTHON AND Python3_FOUND)
